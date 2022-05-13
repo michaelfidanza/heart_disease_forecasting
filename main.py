@@ -28,6 +28,9 @@ st.markdown("<h6 style='text-align: center; color: black;'><a href=" + url + ">d
 st.text('')
 st.text('')
 st.text('')
+st.text('')
+st.text('')
+st.text('')
 
 st.markdown("<h2 style='text-align: center; color: black;'>Data Exploration</h2>", unsafe_allow_html=True)
 
@@ -40,6 +43,10 @@ st.markdown("<h6 style=color: black;'>Raw data</h6>", unsafe_allow_html=True)
 st.write(heart_disease_df)
 
 # empty spaces
+st.text('')
+st.text('')
+st.text('')
+st.text('')
 st.text('')
 st.text('')
 
@@ -73,26 +80,42 @@ We can see that heart disease has the strongest positive correlation with alcoho
 # empty spaces
 st.text('')
 st.text('')
+st.text('')
+st.text('')
+st.text('')
+st.text('')
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # show how many people in the dataset have heart disease vs how many don't have heart disease
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
-fig2 = plt.figure(figsize=(3,3))
-ax2 = fig2.add_subplot(111)
-ax2.pie(
-    [len(heart_disease_df_encoded['heartdisease'] - sum(heart_disease_df_encoded['heartdisease'])),
-     sum(heart_disease_df_encoded['heartdisease'])]
-    ,labels=("Healthy", "Heart disease")
-    ,explode=(0, 0.2)
-    ,startangle=45
-    ,autopct='%1.1f%%'
-    ,shadow=True
-    ,colors=['bisque', 'indianred']
-    )
-plt.title("How many people in the dataset have heartdisease?", fontsize=8)
-st.pyplot(fig2)
-st.write("By looking at the proportion between people who had/have heart disease and those who don't, \
+# divide the web page in 2 columns
+col1, col2 = st.columns(2)
+
+with col1:
+    fig2 = plt.figure(figsize=(3,3))
+    ax2 = fig2.add_subplot(111)
+    ax2.pie(
+        [len(heart_disease_df_encoded['heartdisease'] - sum(heart_disease_df_encoded['heartdisease'])),
+        sum(heart_disease_df_encoded['heartdisease'])]
+        ,labels=("Healthy", "Heart disease")
+        ,explode=(0, 0.2)
+        ,startangle=45
+        ,autopct='%1.1f%%'
+        ,shadow=True
+        ,colors=['bisque', 'indianred']
+        )
+    plt.title("How many people in the dataset have heartdisease?", fontsize=8)
+    st.pyplot(fig2)
+
+with col2:
+    st.text('')
+    st.text('')
+    st.text('')
+    st.text('')
+    st.text('')
+    st.text('')
+    st.write("By looking at the proportion between people who had/have heart disease and those who don't, \
     we notice that the dataset is unbalanced, and this will be a problem later when applying ML algorithms")
 
 # empty spaces
@@ -102,6 +125,8 @@ st.text('')
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # show how BMI is related to other variables
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+col1 = st.columns(1)
 
 fig4, ax4 = plt.subplots(3, 2, figsize=(20, 40))
 
@@ -163,48 +188,53 @@ st.pyplot(fig4)
 # empty spaces
 st.text('')
 st.text('')
-
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-# show percentages of diabetic people for each age category
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-
-fig3, ax3 = plt.subplots(1, 2, figsize=(20,10))
-
-# encode values manually to decide how to encode them
-heart_disease_df_sorted['diabetic'] = heart_disease_df_sorted['diabetic'].map({'Yes' : 1, 'No' : 0, 'Yes (during pregnancy)' : 1, 'No, borderline diabetes' : 0})
-
-# group by age category to find the total number of people and of people with diabtes for each age category
-diabetic_statistics = heart_disease_df_sorted.groupby('agecategory')['diabetic'].aggregate([sum, 'count'])
-
-# calculate the percentage using sum and count
-diabetic_statistics['percentage'] = diabetic_statistics['sum'] / diabetic_statistics['count'] * 100
-
-# graph for age distribution
-ax3[0].bar(diabetic_statistics.index, diabetic_statistics['count'], align='center', alpha=0.5)
-# graph about percentage of diabetic people for age category
-ax3[1].bar(diabetic_statistics.index, diabetic_statistics['percentage'], align='center', alpha=0.5)
-
-ax3[0].set_title('Distribution of age category', fontsize=15)
-ax3[1].set_title('% of diabetic people for each age category', fontsize=15)
-
-ax3[0].tick_params(axis='x', rotation=45)
-ax3[1].tick_params(axis='x', rotation=45)
-
-st.pyplot(fig3)
-st.write("We can notice that as age grows, also the probability to be diabetic grows")
-
-# empty spaces
+st.text('')
+st.text('')
 st.text('')
 st.text('')
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
-# show how age category is related to other variables
+# show percentages of diabetic people for each age category ---- OLD ----
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
+# fig3, ax3 = plt.subplots(1, 2, figsize=(20,10))
 
-fig5, ax5 = plt.subplots(figsize=(3,3))
+# # encode values manually to decide how to encode them
+# heart_disease_df_sorted['diabetic'] = heart_disease_df_sorted['diabetic'].map({'Yes' : 1, 'No' : 0, 'Yes (during pregnancy)' : 1, 'No, borderline diabetes' : 0})
 
-# divide the web page in 2 columns
+# # group by age category to find the total number of people and of people with diabtes for each age category
+# diabetic_statistics = heart_disease_df_sorted.groupby('agecategory')['diabetic'].aggregate([sum, 'count'])
+
+# # calculate the percentage using sum and count
+# diabetic_statistics['percentage'] = diabetic_statistics['sum'] / diabetic_statistics['count'] * 100
+
+# # graph for age distribution
+# ax3[0].bar(diabetic_statistics.index, diabetic_statistics['count'], align='center', alpha=0.5)
+# # graph about percentage of diabetic people for age category
+# ax3[1].bar(diabetic_statistics.index, diabetic_statistics['percentage'], align='center', alpha=0.5)
+
+# ax3[0].set_title('Distribution of age category', fontsize=15)
+# ax3[1].set_title('% of diabetic people for each age category', fontsize=15)
+
+# ax3[0].tick_params(axis='x', rotation=45)
+# ax3[1].tick_params(axis='x', rotation=45)
+
+# st.pyplot(fig3)
+# st.write("We can notice that as age grows, also the probability to be diabetic grows")
+
+# # empty spaces
+# st.text('')
+# st.text('')
+# st.text('')
+# st.text('')
+# st.text('')
+# st.text('')
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# show how selected feature is related to other variables
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+
 col1, col2 = st.columns(2)
 
 # use the sorted df and map the variables with integer values
@@ -213,73 +243,229 @@ heart_disease_df_sorted['smoking'] = heart_disease_df_sorted['smoking'].map({"Ye
 heart_disease_df_sorted['alcoholdrinking'] = heart_disease_df_sorted['alcoholdrinking'].map({"Yes" : 1, "No" : 0})
 heart_disease_df_sorted['skincancer'] = heart_disease_df_sorted['skincancer'].map({"Yes" : 1, "No" : 0})
 heart_disease_df_sorted['heartdisease'] = heart_disease_df_sorted['heartdisease'].map({"Yes" : 1, "No" : 0})
+heart_disease_df_sorted['diabetic'] = heart_disease_df_sorted['diabetic'].map({'Yes' : 1, 'No' : 0, 'Yes (during pregnancy)' : 1, 'No, borderline diabetes' : 0})
 
-# calculate % of "positive" to the features by age category
-heart_disease_df_avg = heart_disease_df_sorted[['agecategory', 'stroke', 'smoking', 'alcoholdrinking', 'skincancer', 'heartdisease']].groupby('agecategory').mean()
-
+# let the user decide based on which feature he wants to aggregate the dataset
 with col1:
-    ax5.bar(
-        heart_disease_df_avg.index
-        ,heart_disease_df_avg['stroke']*100
-        ,align='center'
-        ,alpha=0.5
-    )
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('Relation between agecategory and stroke')
-    st.write(fig5)
+    aggregation_feature = st.selectbox('Select the features used to group the dataset', ['agecategory', 'sex', 'race'])
 
-fig5, ax5 = plt.subplots(figsize=(3,3))
-
+# let the used decide the type of graph to visualize: 1: total number over positive number, 2: % graphs
 with col2:
-    ax5.bar(
-        heart_disease_df_avg.index
-        ,heart_disease_df_avg['smoking']*100
-        ,align='center'
-        ,alpha=0.5
-        ,color='indianred'
-    )
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('Relation between agecategory and smoking')
-    st.write(fig5)
+    type_of_visualization = st.selectbox('Select the type of visualization', ['1: Comparison between total and positive', '2: Percentage of positive people'])
+if '1:' in type_of_visualization:
+    type_of_visualization = 1
+else:
+    type_of_visualization = 2
 
+# calculate number of "positive" to the features and total number of people group by age category
+heart_disease_df_aggregate = heart_disease_df_sorted[[aggregation_feature, 'stroke', 'smoking', 'alcoholdrinking', 'skincancer', 'heartdisease', 'diabetic']]\
+    .groupby(aggregation_feature).aggregate([sum, 'count', 'mean'])
+
+# plot the distribution of people grouped by the selected feature
+st.columns(1)
 fig5, ax5 = plt.subplots(figsize=(3,3))
+ax5.bar(
+    heart_disease_df_aggregate.index
+    ,heart_disease_df_aggregate['diabetic', 'count']
+    ,align='center',
+    alpha=0.5
+)
+ax5.tick_params(axis='x', rotation=90)
+ax5.set_title('Distribution of people grouped by the feature: ' + aggregation_feature)
+st.write(fig5)
 
+col1, col2 = st.columns(2)
+# show all the plots for the various features grouped by the feature selected by the user
+fig5, ax5 = plt.subplots(figsize=(3,3))
 with col1:
-    ax5.bar(
-        heart_disease_df_avg.index
-        ,heart_disease_df_avg['alcoholdrinking']*100
+    
+    # type 1: total number in the category over positive number
+    if type_of_visualization == 1:
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['stroke', 'count']
+            ,align='center'
+            ,alpha=0.5
+        )
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['stroke', 'sum']
+            ,align='center'
+            ,alpha=0.5
+        )
+    
+    # type 2: % graphs
+    else:
+        ax5.bar(
+        heart_disease_df_aggregate.index
+        ,heart_disease_df_aggregate['stroke', 'mean']*100
         ,align='center'
         ,alpha=0.5
-        ,color='green'
-    )
+        )
+
     ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('Relation between agecategory and drinking')
+    ax5.set_title('People who had stroke')
     st.write(fig5)
 
 fig5, ax5 = plt.subplots(figsize=(3,3))
-
 with col2:
-    ax5.bar(
-        heart_disease_df_avg.index
-        ,heart_disease_df_avg['skincancer']*100
+    if type_of_visualization == 1:
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['heartdisease','count']
+            ,align='center'
+            ,alpha=0.5
+            ,color='green'
+        )
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['heartdisease','sum']
+            ,align='center'
+            ,alpha=0.5
+            ,color='red'
+        )
+    else:
+        ax5.bar(
+        heart_disease_df_aggregate.index
+        ,heart_disease_df_aggregate['heartdisease', 'mean']*100
         ,align='center'
         ,alpha=0.5
-        ,color='purple'
-    )
+        )
     ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('Relation between agecategory and skincancer')
+    ax5.set_title('People whith heart disease')
     st.write(fig5)
 
 fig5, ax5 = plt.subplots(figsize=(3,3))
-
 with col1:
-    ax5.bar(
-        heart_disease_df_avg.index
-        ,heart_disease_df_avg['heartdisease']*100
+    if type_of_visualization == 1:
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['skincancer','count']
+            ,align='center'
+            ,alpha=0.5
+            ,color='purple'
+        )
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['skincancer','sum']
+            ,align='center'
+            ,alpha=0.5
+            ,color='red'
+        )
+    else:
+        ax5.bar(
+        heart_disease_df_aggregate.index
+        ,heart_disease_df_aggregate['skincancer', 'mean']*100
         ,align='center'
         ,alpha=0.5
-        ,color='green'
-    )
+        )
     ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('Relation between agecategory and heartdisease')
+    ax5.set_title('People who have skin cancer')
     st.write(fig5)
+
+fig5, ax5 = plt.subplots(figsize=(3,3))
+with col2:
+    if type_of_visualization == 1:
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['alcoholdrinking','count']
+            ,align='center'
+            ,alpha=0.5
+            ,color='orange'
+        )
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['alcoholdrinking','sum']
+            ,align='center'
+            ,alpha=0.5
+            ,color='red'
+        )
+    else:
+        ax5.bar(
+        heart_disease_df_aggregate.index
+        ,heart_disease_df_aggregate['alcoholdrinking', 'mean']*100
+        ,align='center'
+        ,alpha=0.5
+        )
+    ax5.tick_params(axis='x', rotation=90)
+    ax5.set_title('People who drinks')
+    st.write(fig5)
+    
+fig5, ax5 = plt.subplots(figsize=(3,3))
+with col1:
+    if type_of_visualization == 1:
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['smoking','count']
+            ,align='center'
+            ,alpha=0.5
+            ,color='indianred'
+        )
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['smoking','sum']
+            ,align='center'
+            ,alpha=0.5
+            ,color='yellow'
+        )
+    else:
+        ax5.bar(
+        heart_disease_df_aggregate.index
+        ,heart_disease_df_aggregate['smoking', 'mean']*100
+        ,align='center'
+        ,alpha=0.5
+        )
+    ax5.tick_params(axis='x', rotation=90)
+    ax5.set_title('People who smokes')
+    st.write(fig5)
+
+fig5, ax5 = plt.subplots(figsize=(3,3))
+with col2:
+    if type_of_visualization == 1:
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['diabetic','count']
+            ,align='center'
+            ,alpha=0.5
+            ,color='indianred'
+        )
+        ax5.bar(
+            heart_disease_df_aggregate.index
+            ,heart_disease_df_aggregate['diabetic','sum']
+            ,align='center'
+            ,alpha=0.5
+            ,color='yellow'
+        )
+    else:
+        ax5.bar(
+        heart_disease_df_aggregate.index
+        ,heart_disease_df_aggregate['diabetic', 'mean']*100
+        ,align='center'
+        ,alpha=0.5
+        )
+    ax5.tick_params(axis='x', rotation=90)
+    ax5.set_title('People who are diabetics')
+    st.write(fig5)
+
+# setting back the web page to 1 column
+st.columns(1)
+
+# general plot to check how % of positive people vary with selected feature
+fig5, ax5 = plt.subplots(figsize=(8,6))
+ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['stroke','sum']/heart_disease_df_aggregate['stroke','count']*100), label='stroke')
+ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['heartdisease','sum']/heart_disease_df_aggregate['heartdisease','count']*100), label='heartdisease')
+ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['skincancer','sum']/heart_disease_df_aggregate['skincancer','count']*100), label='skincancer')
+ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['alcoholdrinking','sum']/heart_disease_df_aggregate['alcoholdrinking','count']*100), label='alcoholdrinking')
+ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['smoking','sum']/heart_disease_df_aggregate['smoking','count']*100), label='smoking')
+ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['diabetic','sum']/heart_disease_df_aggregate['diabetic','count']*100), label='diabetic')
+ax5.tick_params(axis='x', rotation=90)
+ax5.set_title('Features with age')
+ax5.set_ylabel('% of people')
+ax5.legend(loc='upper left', prop={"size":8})
+st.pyplot(fig5)
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# SCATTERPLOT FOR BMI GROUPED BY FEATURE?
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+    
