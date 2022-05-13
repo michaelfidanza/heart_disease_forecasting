@@ -6,9 +6,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import streamlit as st
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+# from imblearn import under_sampling, over_sampling
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.decomposition import PCA
 from sklearn import preprocessing
-
+import streamlit as st
 # initialize dataset
 heart_disease_df = pd.read_csv(r'~/Desktop/Documents/repos/heart_disease_forecasting/heart_2020_cleaned.csv')
 
@@ -267,8 +276,9 @@ fig5, ax5 = plt.subplots(figsize=(3,3))
 ax5.bar(
     heart_disease_df_aggregate.index
     ,heart_disease_df_aggregate['diabetic', 'count']
-    ,align='center',
-    alpha=0.5
+    ,align='center'
+    ,color='bisque'
+    ,alpha=1
 )
 ax5.tick_params(axis='x', rotation=90)
 ax5.set_title('Distribution of people grouped by the feature: ' + aggregation_feature)
@@ -285,13 +295,13 @@ with col1:
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['stroke', 'count']
             ,align='center'
-            ,alpha=0.5
+            ,color='bisque'
         )
         ax5.bar(
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['stroke', 'sum']
             ,align='center'
-            ,alpha=0.5
+            ,color='indianred'
         )
     
     # type 2: % graphs
@@ -300,9 +310,10 @@ with col1:
         heart_disease_df_aggregate.index
         ,heart_disease_df_aggregate['stroke', 'mean']*100
         ,align='center'
+        ,color='indianred'
         ,alpha=0.5
         )
-
+        ax5.set_ylabel('%')
     ax5.tick_params(axis='x', rotation=90)
     ax5.set_title('People who had stroke')
     st.write(fig5)
@@ -314,23 +325,23 @@ with col2:
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['heartdisease','count']
             ,align='center'
-            ,alpha=0.5
-            ,color='green'
+            ,color='bisque'
         )
         ax5.bar(
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['heartdisease','sum']
             ,align='center'
-            ,alpha=0.5
-            ,color='red'
+            ,color='indianred'
         )
     else:
         ax5.bar(
         heart_disease_df_aggregate.index
         ,heart_disease_df_aggregate['heartdisease', 'mean']*100
         ,align='center'
+        ,color='indianred'
         ,alpha=0.5
         )
+        ax5.set_ylabel('%')
     ax5.tick_params(axis='x', rotation=90)
     ax5.set_title('People whith heart disease')
     st.write(fig5)
@@ -342,23 +353,23 @@ with col1:
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['skincancer','count']
             ,align='center'
-            ,alpha=0.5
-            ,color='purple'
+            ,color='bisque'
         )
         ax5.bar(
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['skincancer','sum']
             ,align='center'
-            ,alpha=0.5
-            ,color='red'
+            ,color='indianred'
         )
     else:
         ax5.bar(
         heart_disease_df_aggregate.index
         ,heart_disease_df_aggregate['skincancer', 'mean']*100
         ,align='center'
+        ,color='indianred'
         ,alpha=0.5
         )
+        ax5.set_ylabel('%')
     ax5.tick_params(axis='x', rotation=90)
     ax5.set_title('People who have skin cancer')
     st.write(fig5)
@@ -370,23 +381,23 @@ with col2:
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['alcoholdrinking','count']
             ,align='center'
-            ,alpha=0.5
-            ,color='orange'
+            ,color='bisque'
         )
         ax5.bar(
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['alcoholdrinking','sum']
             ,align='center'
-            ,alpha=0.5
-            ,color='red'
+            ,color='indianred'
         )
     else:
         ax5.bar(
         heart_disease_df_aggregate.index
         ,heart_disease_df_aggregate['alcoholdrinking', 'mean']*100
         ,align='center'
+        ,color='indianred'
         ,alpha=0.5
         )
+        ax5.set_ylabel('%')
     ax5.tick_params(axis='x', rotation=90)
     ax5.set_title('People who drinks')
     st.write(fig5)
@@ -398,23 +409,23 @@ with col1:
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['smoking','count']
             ,align='center'
-            ,alpha=0.5
-            ,color='indianred'
+            ,color='bisque'
         )
         ax5.bar(
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['smoking','sum']
             ,align='center'
-            ,alpha=0.5
-            ,color='yellow'
+            ,color='indianred'
         )
     else:
         ax5.bar(
         heart_disease_df_aggregate.index
         ,heart_disease_df_aggregate['smoking', 'mean']*100
         ,align='center'
+        ,color='indianred'
         ,alpha=0.5
         )
+        ax5.set_ylabel('%')
     ax5.tick_params(axis='x', rotation=90)
     ax5.set_title('People who smokes')
     st.write(fig5)
@@ -426,23 +437,23 @@ with col2:
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['diabetic','count']
             ,align='center'
-            ,alpha=0.5
-            ,color='indianred'
+            ,color='bisque'
         )
         ax5.bar(
             heart_disease_df_aggregate.index
             ,heart_disease_df_aggregate['diabetic','sum']
             ,align='center'
-            ,alpha=0.5
-            ,color='yellow'
+            ,color='indianred'
         )
     else:
         ax5.bar(
         heart_disease_df_aggregate.index
         ,heart_disease_df_aggregate['diabetic', 'mean']*100
         ,align='center'
+        ,color='indianred'
         ,alpha=0.5
         )
+        ax5.set_ylabel('%')
     ax5.tick_params(axis='x', rotation=90)
     ax5.set_title('People who are diabetics')
     st.write(fig5)
@@ -450,22 +461,107 @@ with col2:
 # setting back the web page to 1 column
 st.columns(1)
 
-# general plot to check how % of positive people vary with selected feature
-fig5, ax5 = plt.subplots(figsize=(8,6))
-ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['stroke','sum']/heart_disease_df_aggregate['stroke','count']*100), label='stroke')
-ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['heartdisease','sum']/heart_disease_df_aggregate['heartdisease','count']*100), label='heartdisease')
-ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['skincancer','sum']/heart_disease_df_aggregate['skincancer','count']*100), label='skincancer')
-ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['alcoholdrinking','sum']/heart_disease_df_aggregate['alcoholdrinking','count']*100), label='alcoholdrinking')
-ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['smoking','sum']/heart_disease_df_aggregate['smoking','count']*100), label='smoking')
-ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['diabetic','sum']/heart_disease_df_aggregate['diabetic','count']*100), label='diabetic')
-ax5.tick_params(axis='x', rotation=90)
-ax5.set_title('Features with age')
-ax5.set_ylabel('% of people')
-ax5.legend(loc='upper left', prop={"size":8})
-st.pyplot(fig5)
+# general plot to check how % of positive people vary with selected feature (only for age category)
+if aggregation_feature == 'agecategory':
+    fig5, ax5 = plt.subplots(figsize=(8,6))
+    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['stroke','sum']/heart_disease_df_aggregate['stroke','count']*100), label='stroke')
+    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['heartdisease','sum']/heart_disease_df_aggregate['heartdisease','count']*100), label='heartdisease')
+    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['skincancer','sum']/heart_disease_df_aggregate['skincancer','count']*100), label='skincancer')
+    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['alcoholdrinking','sum']/heart_disease_df_aggregate['alcoholdrinking','count']*100), label='alcoholdrinking')
+    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['smoking','sum']/heart_disease_df_aggregate['smoking','count']*100), label='smoking')
+    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['diabetic','sum']/heart_disease_df_aggregate['diabetic','count']*100), label='diabetic')
+    ax5.tick_params(axis='x', rotation=90)
+    ax5.set_title('Features varying with age')
+    ax5.set_ylabel('%')
+    ax5.legend(loc='upper left', prop={"size":8})
+    st.pyplot(fig5)
 
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# ADD AVERAGE BMI, AVERAGE HEALTH INDICATORS??
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # SCATTERPLOT FOR BMI GROUPED BY FEATURE?
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# MACHINE LEARNING
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+col1, col2 = st.columns(2)
+
+# take inputs from the user to decide which model and how to use it
+with col1:
+    type_of_model = st.selectbox('Select the ML model to use', ['1: Gaussian Naive Bayes', '2: Random Forest', '3: Decision Tree', '4: Linear Regression'])
+    kfold_method = st.checkbox('Use kfold method')
+
+with col2:
+    type_of_sampling = st.selectbox('Select how to handle unbalanced dataset', ['1: Undersampling', '2: Oversampling', '3: Undersampling and oversampling', '4: No action'])
+    pca_method = st.checkbox('Use PCA')
+
+st.columns(1)
+feature_to_predict = st.selectbox('Select the feature to predict', ['stroke', 'heartdisease'])
+test_size_input = st.slider('Select the test size for the model', min_value=0.1, max_value=0.9, step=0.05)
+
+y = heart_disease_df_encoded[feature_to_predict]
+x = heart_disease_df_encoded.drop(feature_to_predict, axis=1)
+
+# use the selected sampler to handle unbalanced dataset
+if '1:' in type_of_sampling:
+    sampler = RandomUnderSampler()
+    x_sample, y_sample = sampler.fit_resample(x, y)
+    st.write('help')
+elif '2:' in type_of_sampling:
+    sampler = RandomOverSampler()
+    x_sample, y_sample = sampler.fit_resample(x, y)
+    st.write('help')
+elif '3:' in type_of_sampling:
+    st.write('help')
+
+else:
+    st.write('help')
+
+# assign the selected model
+if '1:' in type_of_model:
+    model = GaussianNB()
+elif '2:' in type_of_model:
+    model = RandomForestClassifier()
+elif '3:' in type_of_model:
+    model = DecisionTreeClassifier()
+else:
+    st.write('help')
+    #model = LinearRegression()
+
+if kfold_method:
+    # declare kfold
+    kf = KFold(n_splits=10, shuffle=True, random_state=42)
     
+    i = 0
+    accuracies = []
+
+    # ten splits of indexes of my data to use for training/test and find average accuracy of the model
+    for train_index, test_index in kf.split(x_sample):
+        x_train, x_test = x_sample.iloc[train_index], x_sample.iloc[test_index]
+        y_train, y_test = y_sample.iloc[train_index], y_sample.iloc[test_index]
+        model.fit(x_train, y_train)
+        y_pred = model.predict(x_test)
+        accuracy = accuracy_score(y_pred, y_test)
+        accuracies.append(accuracy)
+        i += 1
+        st.write('Accuracy training number ' + str(i) + ': ' + str(accuracy))
+
+    st.write('Mean accuracy of the model:', np.array(accuracies).mean())
+else:
+    # split the dataset into train/test data using a library function
+    x_train, x_test, y_train, y_test = train_test_split(x_sample, y_sample, test_size=test_size_input, random_state=42, shuffle=True)
+
+    # train the model
+    model.fit(x_train, y_train)
+
+    # predict the values
+    y_pred = model.predict(x_test)
+
+    # show the accuracy of the model
+    accuracy = accuracy_score(y_test, y_pred)
+    st.write('Accuracy of the model: ' + str(accuracy))
