@@ -1,5 +1,6 @@
 # importing all the libraries
 import io
+from utils import sampler, cf_matrix_plot, pie_pos_neg_chart
 from itertools import groupby
 from nbformat import write
 import pandas as pd
@@ -10,13 +11,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
-# from imblearn import under_sampling, over_sampling
-from imblearn.over_sampling import RandomOverSampler
-from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
 from sklearn import preprocessing
+from sklearn.utils import shuffle
 import streamlit as st
 # initialize dataset
 heart_disease_df = pd.read_csv(r'~/Desktop/Documents/repos/heart_disease_forecasting/heart_2020_cleaned.csv')
@@ -101,31 +100,23 @@ st.text('')
 # divide the web page in 2 columns
 col1, col2 = st.columns(2)
 
+# pie chart for positive/negative to heart disease
 with col1:
-    fig2 = plt.figure(figsize=(3,3))
-    ax2 = fig2.add_subplot(111)
-    ax2.pie(
-        [len(heart_disease_df_encoded['heartdisease'] - sum(heart_disease_df_encoded['heartdisease'])),
-        sum(heart_disease_df_encoded['heartdisease'])]
-        ,labels=("Healthy", "Heart disease")
-        ,explode=(0, 0.2)
-        ,startangle=45
-        ,autopct='%1.1f%%'
-        ,shadow=True
-        ,colors=['bisque', 'indianred']
-        )
-    plt.title("How many people in the dataset have heartdisease?", fontsize=8)
-    st.pyplot(fig2)
+    st.pyplot(pie_pos_neg_chart(heart_disease_df_encoded['heartdisease'], \
+    ("Negative (" + str(len(heart_disease_df_encoded['heartdisease']) - sum(heart_disease_df_encoded['heartdisease'])) + ')', "Positive (" + str(sum(heart_disease_df_encoded['heartdisease'])) + ')'), \
+        "People with heart disease?"))
 
+# pie chart for positive/negative to stroke
 with col2:
-    st.text('')
-    st.text('')
-    st.text('')
-    st.text('')
-    st.text('')
-    st.text('')
-    st.write("By looking at the proportion between people who had/have heart disease and those who don't, \
-    we notice that the dataset is unbalanced, and this will be a problem later when applying ML algorithms")
+    st.pyplot(pie_pos_neg_chart(heart_disease_df_encoded['stroke'],\
+        ("Negative (" + str(len(heart_disease_df_encoded['stroke']) - sum(heart_disease_df_encoded['stroke'])) + ')', \
+            "Positive (" + str(sum(heart_disease_df_encoded['stroke'])) + ')'),\
+               "People with stroke?" ))
+
+st.columns(1)
+
+st.write("By looking at the proportion between people who had/have heart disease/stroke and those who don't, \
+we notice that the dataset is imbalanced, and this could be a problem later when applying ML algorithms")
 
 # empty spaces
 st.text('')
@@ -183,12 +174,12 @@ sns.boxplot(
 ax4[0,1].tick_params(axis='x', rotation=45)
 ax4[1,0].tick_params(axis='x', rotation=20)
 ax4[1,1].tick_params(axis='x', rotation=20)
-ax4[0,0].set_title('Are BMI and sex related?', fontsize=15)
-ax4[0,1].set_title('Are BMI and age category related?', fontsize=15)
-ax4[1,0].set_title('Are BMI and race related?', fontsize=15)
-ax4[1,1].set_title('Are BMI and diabetic state related?', fontsize=15)
-ax4[2,0].set_title('Are BMI and difficulty in walking related?', fontsize=15)
-ax4[2,1].set_title('Are BMI and physical activity related?', fontsize=15)
+ax4[0,0].set_title('Are BMI and sex related?\n', fontsize=15)
+ax4[0,1].set_title('Are BMI and age category related?\n', fontsize=15)
+ax4[1,0].set_title('Are BMI and race related\n?', fontsize=15)
+ax4[1,1].set_title('Are BMI and diabetic state related?\n', fontsize=15)
+ax4[2,0].set_title('Are BMI and difficulty in walking related?\n', fontsize=15)
+ax4[2,1].set_title('Are BMI and physical activity related?\n', fontsize=15)
 
 fig4.suptitle('How  BMI is related to other variables', fontsize=20)
 
@@ -201,44 +192,6 @@ st.text('')
 st.text('')
 st.text('')
 st.text('')
-
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-# show percentages of diabetic people for each age category ---- OLD ----
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-
-# fig3, ax3 = plt.subplots(1, 2, figsize=(20,10))
-
-# # encode values manually to decide how to encode them
-# heart_disease_df_sorted['diabetic'] = heart_disease_df_sorted['diabetic'].map({'Yes' : 1, 'No' : 0, 'Yes (during pregnancy)' : 1, 'No, borderline diabetes' : 0})
-
-# # group by age category to find the total number of people and of people with diabtes for each age category
-# diabetic_statistics = heart_disease_df_sorted.groupby('agecategory')['diabetic'].aggregate([sum, 'count'])
-
-# # calculate the percentage using sum and count
-# diabetic_statistics['percentage'] = diabetic_statistics['sum'] / diabetic_statistics['count'] * 100
-
-# # graph for age distribution
-# ax3[0].bar(diabetic_statistics.index, diabetic_statistics['count'], align='center', alpha=0.5)
-# # graph about percentage of diabetic people for age category
-# ax3[1].bar(diabetic_statistics.index, diabetic_statistics['percentage'], align='center', alpha=0.5)
-
-# ax3[0].set_title('Distribution of age category', fontsize=15)
-# ax3[1].set_title('% of diabetic people for each age category', fontsize=15)
-
-# ax3[0].tick_params(axis='x', rotation=45)
-# ax3[1].tick_params(axis='x', rotation=45)
-
-# st.pyplot(fig3)
-# st.write("We can notice that as age grows, also the probability to be diabetic grows")
-
-# # empty spaces
-# st.text('')
-# st.text('')
-# st.text('')
-# st.text('')
-# st.text('')
-# st.text('')
-
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # show how selected feature is related to other variables
@@ -485,42 +438,52 @@ if aggregation_feature == 'agecategory':
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+# empty spaces
+st.text('')
+st.text('')
+st.text('')
+st.text('')
+st.text('')
+st.text('')
+
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # MACHINE LEARNING
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
+# title
+st.markdown("<h2 style='text-align: center; color: black;'>Machine Learning</h2>", unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
 # take inputs from the user to decide which model and how to use it
 with col1:
     type_of_model = st.selectbox('Select the ML model to use', ['1: Gaussian Naive Bayes', '2: Random Forest', '3: Decision Tree', '4: Linear Regression'])
-    kfold_method = st.checkbox('Use kfold method')
-
 with col2:
-    type_of_sampling = st.selectbox('Select how to handle unbalanced dataset', ['1: Undersampling', '2: Oversampling', '3: Undersampling and oversampling', '4: No action'])
-    pca_method = st.checkbox('Use PCA')
+    type_of_sampling = st.selectbox('Select how to handle imbalanced dataset', ['1: No action', '2: Undersampling', '3: Oversampling', '4: Undersampling and oversampling', '5: SMOTE'])
 
 st.columns(1)
-feature_to_predict = st.selectbox('Select the feature to predict', ['stroke', 'heartdisease'])
-test_size_input = st.slider('Select the test size for the model', min_value=0.1, max_value=0.9, step=0.05)
 
+# make the user decide what he wants to predict
+feature_to_predict = st.selectbox('Select the feature to predict', ['heartdisease','stroke'])
+
+# prepare feature to predict and predictors based on user input
 y = heart_disease_df_encoded[feature_to_predict]
 x = heart_disease_df_encoded.drop(feature_to_predict, axis=1)
 
-# use the selected sampler to handle unbalanced dataset
-if '1:' in type_of_sampling:
-    sampler = RandomUnderSampler()
-    x_sample, y_sample = sampler.fit_resample(x, y)
-    st.write('help')
-elif '2:' in type_of_sampling:
-    sampler = RandomOverSampler()
-    x_sample, y_sample = sampler.fit_resample(x, y)
-    st.write('help')
-elif '3:' in type_of_sampling:
-    st.write('help')
+# other choices for the user
+col1, col2, col3 = st.columns(3)
+with col1:
+    shuffle_dataset = st.checkbox('Shuffle dataset', value=True)
+with col2:
+    pca_method = st.checkbox('Use PCA')
+with col3:
+    kfold_method = st.checkbox('Use kfold method')
+    if kfold_method:
+        kfold_splits = st.selectbox('Choose the number of splits for kfold cross validation', ['5', '6', '7', '8', '9', '10'])
 
-else:
-    st.write('help')
+st.columns(1)
+
+# size of the test set
+test_size_input = st.slider('Select the test size for the model', min_value=0.1, max_value=0.9, step=0.05, value=0.2)
 
 # assign the selected model
 if '1:' in type_of_model:
@@ -533,35 +496,76 @@ else:
     st.write('help')
     #model = LinearRegression()
 
+col1, col2 = st.columns(2)
+
 if kfold_method:
     # declare kfold
-    kf = KFold(n_splits=10, shuffle=True, random_state=42)
-    
+    if shuffle_dataset:
+        kf = KFold(n_splits=int(kfold_splits), shuffle=shuffle_dataset, random_state=42)
+    else:
+        kf = KFold(n_splits=int(kfold_splits), shuffle=shuffle_dataset)
     i = 0
     accuracies = []
 
     # ten splits of indexes of my data to use for training/test and find average accuracy of the model
-    for train_index, test_index in kf.split(x_sample):
-        x_train, x_test = x_sample.iloc[train_index], x_sample.iloc[test_index]
-        y_train, y_test = y_sample.iloc[train_index], y_sample.iloc[test_index]
-        model.fit(x_train, y_train)
-        y_pred = model.predict(x_test)
-        accuracy = accuracy_score(y_pred, y_test)
-        accuracies.append(accuracy)
-        i += 1
-        st.write('Accuracy training number ' + str(i) + ': ' + str(accuracy))
+    with st.spinner('Training and predicting...'):
+        for train_index, test_index in kf.split(x):
+
+            # find train and test datasets
+            x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+            # use the selected sampler on training set to handle imbalanced dataset
+            x_sample, y_sample = sampler(x_train, y_train, type_of_sampling)
+
+            model.fit(x_sample, y_sample)
+
+            y_pred = model.predict(x_test)
+            accuracy = accuracy_score(y_pred, y_test)
+            accuracies.append(accuracy)
+            
+            if i%2 == 0:
+                with col1:
+                    # display the confusion matrix
+                    st.pyplot(cf_matrix_plot(y_test, y_pred))
+                    st.write('')
+                    st.write('')
+            else:
+                with col2:
+                    # display the confusion matrix
+                    st.pyplot(cf_matrix_plot(y_test, y_pred))
+                    st.write('')
+                    st.write('')
+            i += 1
 
     st.write('Mean accuracy of the model:', np.array(accuracies).mean())
 else:
     # split the dataset into train/test data using a library function
-    x_train, x_test, y_train, y_test = train_test_split(x_sample, y_sample, test_size=test_size_input, random_state=42, shuffle=True)
+    if shuffle_dataset:
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size_input, shuffle=shuffle_dataset, random_state=42)
+    else:
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size_input, shuffle=shuffle_dataset)
+    
+    # use the selected sampler on training set to handle imbalanced dataset
+    x_sample, y_sample = sampler(x_train, y_train, type_of_sampling)
+               
+    with col1:
+        # plot proportion of positive/negative examples in training set
+        st.pyplot(pie_pos_neg_chart(y_sample, ("Healthy (" + str(len(y_sample) - sum(y_sample)) + ')', feature_to_predict + " (" + str(sum(y_sample)) + ')'),
+         "How many people in the training set have/had " +  feature_to_predict + "?"))
+    
+    with col2:
+        # plot proportion of positive/negative examples in test set
+        st.pyplot(pie_pos_neg_chart(y_test, ("Healthy (" + str(len(y_test) - sum(y_test)) + ')', feature_to_predict + " (" + str(sum(y_test)) + ')'),\
+             "How many people in the test set have/had " +  feature_to_predict + "?"))
+    
+    with st.spinner('Training and predicting...'):
+        # train the model
+        model.fit(x_sample, y_sample)
 
-    # train the model
-    model.fit(x_train, y_train)
+        # predict the values
+        y_pred = model.predict(x_test)
 
-    # predict the values
-    y_pred = model.predict(x_test)
 
-    # show the accuracy of the model
-    accuracy = accuracy_score(y_test, y_pred)
-    st.write('Accuracy of the model: ' + str(accuracy))
+    # display the confusion matrix
+    st.pyplot(cf_matrix_plot(y_test, y_pred))
