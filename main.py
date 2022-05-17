@@ -13,24 +13,28 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
 from sklearn import preprocessing
 from sklearn.utils import shuffle
+from sklearn.decomposition import PCA
 import streamlit as st
+
 # initialize dataset
 heart_disease_df = pd.read_csv(r'~/Desktop/Documents/repos/heart_disease_forecasting/heart_2020_cleaned.csv')
 
 # all columns names to lowercase
 heart_disease_df.columns = heart_disease_df.columns.map(lambda x : x.lower())
 
-# defining the url where the data have been taken
-url = 'https://www.kaggle.com/datasets/kamilpytlak/personal-key-indicators-of-heart-disease'
+# defining the urls for dataset source and github profile
+url_dataset = 'https://www.kaggle.com/datasets/kamilpytlak/personal-key-indicators-of-heart-disease'
+url_github = 'https://github.com/michaelfidanza'
 
 # titles
 st.markdown("<h1 style='text-align: center; color: brown;'>Heart Disease Classification</h1>", unsafe_allow_html=True)
 st.markdown("<h2 style='text-align: center; color: grey;'>Programming Project 2021/2022</h2>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; color: grey;'>Michael Fidanza - VR472909</h3>", unsafe_allow_html=True)
-st.markdown("<h6 style='text-align: center; color: black;'><a href=" + url + ">dataset source</a></h6>", unsafe_allow_html=True)
+st.markdown("<h6 style='text-align: center; color: black;'><a href=" + url_github + ">GitHub profile</a> - <a href=" + url_dataset + ">Dataset source</a></h6>", unsafe_allow_html=True)
 
 # empty spaces
 st.text('')
@@ -39,6 +43,12 @@ st.text('')
 st.text('')
 st.text('')
 st.text('')
+
+col1, col2 = st.columns(2)
+with col2:
+    page = st.selectbox('Page:', ['Data Exploration','Machine Learning', 'Simulator'])
+
+st.columns(1)
 
 st.markdown("<h2 style='text-align: center; color: black;'>Data Exploration</h2>", unsafe_allow_html=True)
 
@@ -57,6 +67,13 @@ st.text('')
 st.text('')
 st.text('')
 st.text('')
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# Data cleaning: to drop genhealth and check on outliers for different features
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # show the correlation matrix
@@ -94,7 +111,7 @@ st.text('')
 st.text('')
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
-# show how many people in the dataset have heart disease vs how many don't have heart disease
+# show how many people in the dataset have heart disease / stroke vs how many don't have heart disease / stroke
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 # divide the web page in 2 columns
@@ -138,6 +155,7 @@ sns.boxplot(
     ,y = 'bmi'
     ,data = heart_disease_df
     ,ax=ax4[0,0]
+    ,palette='Reds'
 )
 sns.boxplot(
     x = 'agecategory'
@@ -145,31 +163,37 @@ sns.boxplot(
     # use the sorted df to obtain better results graphically
     ,data = heart_disease_df_sorted
     ,ax=ax4[0,1]
+    ,palette='Reds'
 )
 sns.boxplot(
     x = 'race'
     ,y = 'bmi'
     ,data = heart_disease_df
     ,ax=ax4[1,0]
+    ,palette='Reds'
 )
 sns.boxplot(
     x = 'diabetic'
     ,y = 'bmi'
     ,data = heart_disease_df
     ,ax=ax4[1,1]
+    ,palette='Reds'
 )
 sns.boxplot(
     x = 'diffwalking'
     ,y = 'bmi'
     ,data = heart_disease_df
     ,ax=ax4[2,0]
+    ,palette='Reds'
 )
 sns.boxplot(
     x = 'physicalactivity'
     ,y = 'bmi'
     ,data = heart_disease_df
     ,ax=ax4[2,1]
+    ,palette='Reds'
 )
+
 
 ax4[0,1].tick_params(axis='x', rotation=45)
 ax4[1,0].tick_params(axis='x', rotation=20)
@@ -194,7 +218,7 @@ st.text('')
 st.text('')
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
-# show how selected feature is related to other variables
+# show how selected feature (agecategory, sex or race) is related to other variables
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 col1, col2 = st.columns(2)
@@ -206,6 +230,10 @@ heart_disease_df_sorted['alcoholdrinking'] = heart_disease_df_sorted['alcoholdri
 heart_disease_df_sorted['skincancer'] = heart_disease_df_sorted['skincancer'].map({"Yes" : 1, "No" : 0})
 heart_disease_df_sorted['heartdisease'] = heart_disease_df_sorted['heartdisease'].map({"Yes" : 1, "No" : 0})
 heart_disease_df_sorted['diabetic'] = heart_disease_df_sorted['diabetic'].map({'Yes' : 1, 'No' : 0, 'Yes (during pregnancy)' : 1, 'No, borderline diabetes' : 0})
+heart_disease_df_sorted['diffwalking'] = heart_disease_df_sorted['diffwalking'].map({'Yes' : 1, 'No' : 0})
+heart_disease_df_sorted['physicalactivity'] = heart_disease_df_sorted['physicalactivity'].map({'Yes' : 1, 'No' : 0})
+heart_disease_df_sorted['asthma'] = heart_disease_df_sorted['asthma'].map({'Yes' : 1, 'No' : 0})
+heart_disease_df_sorted['kidneydisease'] = heart_disease_df_sorted['kidneydisease'].map({'Yes' : 1, 'No' : 0})
 
 # let the user decide based on which feature he wants to aggregate the dataset
 with col1:
@@ -219,9 +247,10 @@ if '1:' in type_of_visualization:
 else:
     type_of_visualization = 2
 
+
 # calculate number of "positive" to the features and total number of people group by age category
-heart_disease_df_aggregate = heart_disease_df_sorted[[aggregation_feature, 'stroke', 'smoking', 'alcoholdrinking', 'skincancer', 'heartdisease', 'diabetic']]\
-    .groupby(aggregation_feature).aggregate([sum, 'count', 'mean'])
+heart_disease_df_aggregate = heart_disease_df_sorted[[aggregation_feature, 'stroke', 'smoking', 'alcoholdrinking', 'skincancer', 'heartdisease', 'diabetic', 'diffwalking', 'physicalactivity',\
+    'asthma', 'kidneydisease']].groupby(aggregation_feature).aggregate([sum, 'count', 'mean'])
 
 # plot the distribution of people grouped by the selected feature
 st.columns(1)
@@ -238,205 +267,96 @@ ax5.set_title('Distribution of people grouped by the feature: ' + aggregation_fe
 st.write(fig5)
 
 col1, col2 = st.columns(2)
+
 # show all the plots for the various features grouped by the feature selected by the user
-fig5, ax5 = plt.subplots(figsize=(3,3))
-with col1:
-    
-    # type 1: total number in the category over positive number
-    if type_of_visualization == 1:
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['stroke', 'count']
-            ,align='center'
-            ,color='bisque'
-        )
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['stroke', 'sum']
-            ,align='center'
-            ,color='indianred'
-        )
-    
-    # type 2: % graphs
-    else:
-        ax5.bar(
-        heart_disease_df_aggregate.index
-        ,heart_disease_df_aggregate['stroke', 'mean']*100
-        ,align='center'
-        ,color='indianred'
-        ,alpha=0.5
-        )
-        ax5.set_ylabel('%')
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('People who had stroke')
-    st.write(fig5)
+i = 0
+plottable_features = ['stroke', 'smoking', 'alcoholdrinking', 'skincancer', 'heartdisease', 'diabetic', 'diffwalking', 'physicalactivity', 'asthma', 'kidneydisease']
 
-fig5, ax5 = plt.subplots(figsize=(3,3))
-with col2:
-    if type_of_visualization == 1:
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['heartdisease','count']
-            ,align='center'
-            ,color='bisque'
-        )
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['heartdisease','sum']
-            ,align='center'
-            ,color='indianred'
-        )
-    else:
-        ax5.bar(
-        heart_disease_df_aggregate.index
-        ,heart_disease_df_aggregate['heartdisease', 'mean']*100
-        ,align='center'
-        ,color='indianred'
-        ,alpha=0.5
-        )
-        ax5.set_ylabel('%')
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('People whith heart disease')
-    st.write(fig5)
+for feature in plottable_features:
+    fig5, ax5 = plt.subplots(figsize=(3,3))
+    if i%2 == 0:
+        with col1:
+            # type 1: total number in the category over positive number
+            if type_of_visualization == 1:
+                ax5.bar(
+                    heart_disease_df_aggregate.index
+                    ,heart_disease_df_aggregate[feature, 'count']
+                    ,align='center'
+                    ,color='bisque'
+                )
+                ax5.bar(
+                    heart_disease_df_aggregate.index
+                    ,heart_disease_df_aggregate[feature, 'sum']
+                    ,align='center'
+                    ,color='indianred'
+                )
+            
+            # type 2: % graphs
+            else:
+                ax5.bar(
+                heart_disease_df_aggregate.index
+                ,heart_disease_df_aggregate[feature, 'mean']*100
+                ,align='center'
+                ,color='indianred'
+                ,alpha=0.5
+                )
+                ax5.set_ylabel('%')
+            ax5.tick_params(axis='x', rotation=90)
+            ax5.set_title(aggregation_feature + ' vs ' + feature)
+            st.write(fig5)
 
-fig5, ax5 = plt.subplots(figsize=(3,3))
-with col1:
-    if type_of_visualization == 1:
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['skincancer','count']
-            ,align='center'
-            ,color='bisque'
-        )
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['skincancer','sum']
-            ,align='center'
-            ,color='indianred'
-        )
     else:
-        ax5.bar(
-        heart_disease_df_aggregate.index
-        ,heart_disease_df_aggregate['skincancer', 'mean']*100
-        ,align='center'
-        ,color='indianred'
-        ,alpha=0.5
-        )
-        ax5.set_ylabel('%')
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('People who have skin cancer')
-    st.write(fig5)
-
-fig5, ax5 = plt.subplots(figsize=(3,3))
-with col2:
-    if type_of_visualization == 1:
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['alcoholdrinking','count']
-            ,align='center'
-            ,color='bisque'
-        )
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['alcoholdrinking','sum']
-            ,align='center'
-            ,color='indianred'
-        )
-    else:
-        ax5.bar(
-        heart_disease_df_aggregate.index
-        ,heart_disease_df_aggregate['alcoholdrinking', 'mean']*100
-        ,align='center'
-        ,color='indianred'
-        ,alpha=0.5
-        )
-        ax5.set_ylabel('%')
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('People who drinks')
-    st.write(fig5)
-    
-fig5, ax5 = plt.subplots(figsize=(3,3))
-with col1:
-    if type_of_visualization == 1:
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['smoking','count']
-            ,align='center'
-            ,color='bisque'
-        )
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['smoking','sum']
-            ,align='center'
-            ,color='indianred'
-        )
-    else:
-        ax5.bar(
-        heart_disease_df_aggregate.index
-        ,heart_disease_df_aggregate['smoking', 'mean']*100
-        ,align='center'
-        ,color='indianred'
-        ,alpha=0.5
-        )
-        ax5.set_ylabel('%')
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('People who smokes')
-    st.write(fig5)
-
-fig5, ax5 = plt.subplots(figsize=(3,3))
-with col2:
-    if type_of_visualization == 1:
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['diabetic','count']
-            ,align='center'
-            ,color='bisque'
-        )
-        ax5.bar(
-            heart_disease_df_aggregate.index
-            ,heart_disease_df_aggregate['diabetic','sum']
-            ,align='center'
-            ,color='indianred'
-        )
-    else:
-        ax5.bar(
-        heart_disease_df_aggregate.index
-        ,heart_disease_df_aggregate['diabetic', 'mean']*100
-        ,align='center'
-        ,color='indianred'
-        ,alpha=0.5
-        )
-        ax5.set_ylabel('%')
-    ax5.tick_params(axis='x', rotation=90)
-    ax5.set_title('People who are diabetics')
-    st.write(fig5)
+        with col2:
+            # type 1: total number in the category over positive number
+            if type_of_visualization == 1:
+                ax5.bar(
+                    heart_disease_df_aggregate.index
+                    ,heart_disease_df_aggregate[feature, 'count']
+                    ,align='center'
+                    ,color='bisque'
+                )
+                ax5.bar(
+                    heart_disease_df_aggregate.index
+                    ,heart_disease_df_aggregate[feature, 'sum']
+                    ,align='center'
+                    ,color='indianred'
+                )
+            
+            # type 2: % graphs
+            else:
+                ax5.bar(
+                heart_disease_df_aggregate.index
+                ,heart_disease_df_aggregate[feature, 'mean']*100
+                ,align='center'
+                ,color='indianred'
+                ,alpha=0.5
+                )
+                ax5.set_ylabel('%')
+            ax5.tick_params(axis='x', rotation=90)
+            ax5.set_title(aggregation_feature + ' vs ' + feature)
+            st.write(fig5)
+    i += 1
 
 # setting back the web page to 1 column
 st.columns(1)
 
 # general plot to check how % of positive people vary with selected feature (only for age category)
 if aggregation_feature == 'agecategory':
+    
+    # user can select wchich feature to plot againt age category
+    features_to_plot = st.multiselect('Select the features to plot', plottable_features, default=plottable_features)
+    
     fig5, ax5 = plt.subplots(figsize=(8,6))
-    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['stroke','sum']/heart_disease_df_aggregate['stroke','count']*100), label='stroke')
-    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['heartdisease','sum']/heart_disease_df_aggregate['heartdisease','count']*100), label='heartdisease')
-    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['skincancer','sum']/heart_disease_df_aggregate['skincancer','count']*100), label='skincancer')
-    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['alcoholdrinking','sum']/heart_disease_df_aggregate['alcoholdrinking','count']*100), label='alcoholdrinking')
-    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['smoking','sum']/heart_disease_df_aggregate['smoking','count']*100), label='smoking')
-    ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate['diabetic','sum']/heart_disease_df_aggregate['diabetic','count']*100), label='diabetic')
+    
+    # plot the selected features
+    for feature in features_to_plot:
+        ax5.plot( heart_disease_df_aggregate.index, (heart_disease_df_aggregate[feature,'sum']/heart_disease_df_aggregate[feature,'count']*100), label=feature)
+    
     ax5.tick_params(axis='x', rotation=90)
     ax5.set_title('Features varying with age')
     ax5.set_ylabel('%')
     ax5.legend(loc='upper left', prop={"size":8})
     st.pyplot(fig5)
-
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-# ADD AVERAGE BMI, AVERAGE HEALTH INDICATORS??
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-# SCATTERPLOT FOR BMI GROUPED BY FEATURE?
-# ----------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 # empty spaces
 st.text('')
@@ -449,6 +369,7 @@ st.text('')
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # MACHINE LEARNING
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
+
 # title
 st.markdown("<h2 style='text-align: center; color: black;'>Machine Learning</h2>", unsafe_allow_html=True)
 
@@ -456,9 +377,9 @@ col1, col2 = st.columns(2)
 
 # take inputs from the user to decide which model and how to use it
 with col1:
-    type_of_model = st.selectbox('Select the ML model to use', ['1: Gaussian Naive Bayes', '2: Random Forest', '3: Decision Tree', '4: Linear Regression'])
+    type_of_model = st.selectbox('Select the ML model to use\n', ['1: Gaussian Naive Bayes', '2: Random Forest', '3: Decision Tree', '4: Logistic Regression'])
 with col2:
-    type_of_sampling = st.selectbox('Select how to handle imbalanced dataset', ['1: No action', '2: Undersampling', '3: Oversampling', '4: Undersampling and oversampling', '5: SMOTE'])
+    type_of_sampling = st.selectbox('Select how to handle imbalanced dataset (affect only the training set)', ['1: No action', '2: Undersampling', '3: Oversampling', '4: Undersampling and oversampling', '5: SMOTE'])
 
 st.columns(1)
 
@@ -468,6 +389,15 @@ feature_to_predict = st.selectbox('Select the feature to predict', ['heartdiseas
 # prepare feature to predict and predictors based on user input
 y = heart_disease_df_encoded[feature_to_predict]
 x = heart_disease_df_encoded.drop(feature_to_predict, axis=1)
+
+# make the user decide which features to use as predictors
+predictors = st.multiselect('Select the predictors', x.columns, default=list(x.columns))
+
+# drop the columns that were not selected by the user
+for col in x.columns:
+    if col not in predictors:
+        x = x.drop(col, axis=1)
+
 
 # other choices for the user
 col1, col2, col3 = st.columns(3)
@@ -490,11 +420,10 @@ if '1:' in type_of_model:
     model = GaussianNB()
 elif '2:' in type_of_model:
     model = RandomForestClassifier()
-elif '3:' in type_of_model:
+elif '3':
     model = DecisionTreeClassifier()
 else:
-    st.write('help')
-    #model = LinearRegression()
+    model = LogisticRegression()
 
 col1, col2 = st.columns(2)
 
@@ -507,13 +436,23 @@ if kfold_method:
     i = 0
     accuracies = []
 
+    if pca_method:
+        # pca does the orthogonal projection of the feature to obtain 2 dimensions
+        pca = PCA(n_components=2)
+        # return the 2 features that have most explained variance
+        x = pca.fit(x).transform(x)
+
     # ten splits of indexes of my data to use for training/test and find average accuracy of the model
     with st.spinner('Training and predicting...'):
         for train_index, test_index in kf.split(x):
-
-            # find train and test datasets
-            x_train, x_test = x.iloc[train_index], x.iloc[test_index]
-            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+            if pca_method:
+                # find train and test datasets
+                x_train, x_test = x[train_index], x[test_index]
+                y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+            else:
+                # find train and test datasets
+                x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+                y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
             # use the selected sampler on training set to handle imbalanced dataset
             x_sample, y_sample = sampler(x_train, y_train, type_of_sampling)
@@ -540,12 +479,18 @@ if kfold_method:
 
     st.write('Mean accuracy of the model:', np.array(accuracies).mean())
 else:
+    if pca_method:
+        # pca does the orthogonal projection of the feature to obtain 2 dimensions
+        pca = PCA(n_components=2)
+        # return the 2 features that have most explained variance
+        x = pca.fit(x).transform(x)
+
     # split the dataset into train/test data using a library function
     if shuffle_dataset:
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size_input, shuffle=shuffle_dataset, random_state=42)
     else:
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size_input, shuffle=shuffle_dataset)
-    
+
     # use the selected sampler on training set to handle imbalanced dataset
     x_sample, y_sample = sampler(x_train, y_train, type_of_sampling)
                
@@ -569,3 +514,6 @@ else:
 
     # display the confusion matrix
     st.pyplot(cf_matrix_plot(y_test, y_pred))
+
+
+
