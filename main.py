@@ -1,4 +1,5 @@
 # importing all the libraries
+from email.policy import default
 import io
 from time import sleep
 from utils import sampler, cf_matrix_plot, pie_pos_neg_chart
@@ -27,20 +28,6 @@ heart_disease_df = pd.read_csv(r'~/Desktop/Documents/repos/heart_disease_forecas
 # all columns names to lowercase
 heart_disease_df.columns = heart_disease_df.columns.map(lambda x : x.lower())
 
-# convert non numerical values to numbers using an encoder from sklearn
-# initialize the encoder
-le = preprocessing.LabelEncoder()
-
-# make a copy of the dataframe
-heart_disease_df_encoded = heart_disease_df.copy()
-
-# find the columns which need encoding
-categorical_columns = heart_disease_df_encoded.dtypes[heart_disease_df_encoded.dtypes != 'float64'].index.to_list()
-
-# and encode them
-for col in categorical_columns:
-    heart_disease_df_encoded[col] = le.fit_transform(heart_disease_df_encoded[col])
-    
 # defining the urls for dataset source and github profile
 url_dataset = 'https://www.kaggle.com/datasets/kamilpytlak/personal-key-indicators-of-heart-disease'
 url_github = 'https://github.com/michaelfidanza'
@@ -55,13 +42,60 @@ st.markdown("<h6 style='text-align: center; color: black;'><a href=" + url_githu
 st.text('')
 st.text('')
 st.text('')
-st.text('')
+st.text('')    # display the confusion matrix
+    #st.pyplot(cf_matrix_plot(y_test, y_pred))
+
 st.text('')
 st.text('')
 
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# Data cleaning: to drop genhealth and check on outliers for different features
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+heart_disease_df_before_encoding = heart_disease_df.copy()
+#group BMI
+bins = [0, 18.4, 24.9, 29.9, np.inf]
+names = ['<18.5 Underweight', '18.5-24.9 Normal weight', '25-29.9 Overweight', '>=30 Obese']
+heart_disease_df_before_encoding['bmi'] = pd.cut(heart_disease_df_before_encoding['bmi'], bins, labels=names)
+
+# drop gen health (retrievable from the other factors)
+heart_disease_df_before_encoding = heart_disease_df_before_encoding.drop('genhealth', axis=1)
+
+#reduce diabetes category
+heart_disease_df_before_encoding['diabetic'] = heart_disease_df_before_encoding['diabetic'].map({'Yes (during pregnancy)' : 'Yes', 'No, borderline diabetes' : 'No'})
+
+# drop bmi too low or too high
+
+# drop sleep hours too low or too high
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# Encoding
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+# convert non numerical values to numbers using an encoder from sklearn
+# initialize the encoder
+le = preprocessing.LabelEncoder()
+
+# make a copy of the dataframe
+heart_disease_df_encoded = heart_disease_df_before_encoding.copy()
+
+# find the columns which need encoding
+categorical_columns = heart_disease_df_encoded.dtypes[heart_disease_df_encoded.dtypes != 'float64'].index.to_list()
+
+# and encode them
+for col in categorical_columns:
+    heart_disease_df_encoded[col] = le.fit_transform(heart_disease_df_encoded[col])
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+# Navigation
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+
 col1, col2 = st.columns(2)
 with col2:
-    page = st.selectbox('Page:', ['Data Exploration','Machine Learning', 'Simulator'])
+    page = st.selectbox('Page:', ['Data Exploration','Machine Learning'])
 
 if page == 'Data Exploration':
     st.columns(1)
@@ -84,19 +118,17 @@ if page == 'Data Exploration':
     st.text('')
     st.text('')
 
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------
-    # Data cleaning: to drop genhealth and check on outliers for different features
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------
+    # show the "cleaned" dataset
+    st.markdown("<h6 style=color: black;'>Modified data</h6>", unsafe_allow_html=True)
+    st.write(heart_disease_df_before_encoding)
 
-    # drop gen health (retrievable from the other factors)
-
-    # group age? maybe better as they are for plotting
-
-    # drop bmi too low or too high
-    st.write(heart_disease_df_encoded['bmi'].min())
-    st.write(heart_disease_df_encoded['bmi'].max())
-
-    # drop sleep hours too low or too high
+    # empty spaces
+    st.text('')
+    st.text('')
+    st.text('')
+    st.text('')
+    st.text('')
+    st.text('')
 
     # ----------------------------------------------------------------------------------------------------------------------------------------------------
     # show the correlation matrix
@@ -376,6 +408,7 @@ if page == 'Data Exploration':
     st.text('')
 
 elif page == 'Machine Learning':
+    
     # ----------------------------------------------------------------------------------------------------------------------------------------------------
     # MACHINE LEARNING
     # ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -467,10 +500,16 @@ elif page == 'Machine Learning':
                 # use the selected sampler on training set to handle imbalanced dataset
                 x_sample, y_sample = sampler(x_train, y_train, type_of_sampling)
 
+                # train
                 model.fit(x_sample, y_sample)
-
+                
+                # predict
                 y_pred = model.predict(x_test)
+                
+                #calculate accuracy
                 accuracy = accuracy_score(y_pred, y_test)
+
+                # append accuracy to array
                 accuracies.append(accuracy)
                 
                 if i%2 == 0:
@@ -490,10 +529,11 @@ elif page == 'Machine Learning':
         st.write('Mean accuracy of the model:', np.array(accuracies).mean())
     else:
         if pca_method:
-            # pca does the orthogonal projection of the feature to obtain 2 dimensions
-            pca = PCA(n_components=2)
-            # return the 2 features that have most explained variance
-            x = pca.fit(x).transform(x)
+            with st.spinner('Applying PCA'):
+                # pca does the orthogonal projection of the feature to obtain 2 dimensions
+                pca = PCA(n_components=2)
+                # return the 2 features that have most explained variance
+                x = pca.fit(x).transform(x)
 
         # split the dataset into train/test data using a library function
         if shuffle_dataset:
@@ -502,7 +542,8 @@ elif page == 'Machine Learning':
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size_input, shuffle=shuffle_dataset)
 
         # use the selected sampler on training set to handle imbalanced dataset
-        x_sample, y_sample = sampler(x_train, y_train, type_of_sampling)
+        with st.spinner('Sampling data...'):
+            x_sample, y_sample = sampler(x_train, y_train, type_of_sampling)
                 
         with col1:
             # plot proportion of positive/negative examples in training set
@@ -524,79 +565,244 @@ elif page == 'Machine Learning':
 
         # display the confusion matrix
         st.pyplot(cf_matrix_plot(y_test, y_pred))
-else:
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------
-    # SIMULATOR
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
-    # title
-    st.markdown("<h2 style='text-align: center; color: black;'>Simulator</h2>", unsafe_allow_html=True)
-    st.markdown("<h6 style='text-align: center; color: black;'>Insert your data and find the probability to have heart disease</h6>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
-    
-
-    with col1:
-        sex = st.selectbox('Sex', ['Male', 'Female'])
-        bmi =st.selectbox('BMI', ['<18,5 (underweight)', '18,5 - 24,9 (healthy)', '25-29,9 (overweight)', '>30 (obese)'])
-        alcoholdrinking = st.selectbox('How many drinks per week?', ['<7', '7-14', '>14'])
-        diffwalking = st.selectbox('Difficulty walking', ['No', 'Yes'])
-        sleeptime = st.selectbox('Hours of sleep', list(range(0,25)))
-        kidneydisease = st.selectbox('Kidney disease', ['No', 'Yes'])
-    with col2:
-        race = st.selectbox('Race', ['White', 'Black', 'Hispanic', 'Asian', 'American Indian/Alaskan Native', 'Other'])
-        smoking = st.selectbox('Smoked at least 100 cigarettes?', ['No', 'Yes'])
-        physicalhealth = st.selectbox('Phys health',list(range(0,31)))
-        diabetic = st.selectbox('Diabetic', ['No', 'Yes'])
-        skincancer = st.selectbox('Skin cancer', ['No', 'Yes'])
-    with col3:
-        # group ages like 18-49, 50-59, 60-69, 70-79, >80 ? 
-        agecategory = st.selectbox('Age', ['18-24', '25-29', '30-34','35-39','40-44','45-49','50-54','55-69','70-74','75-79','80 or older'])
-        stroke = st.selectbox('Ever had stroke?', ['No', 'Yes'])
-        mentalhealth = st.selectbox('Mental health',list(range(0,31)))
-        physicalactivity = st.selectbox('Phys activity', ['No', 'Yes'])
-        asthma = st.selectbox('Asthma', ['No', 'Yes'])
-
-    
-    user_dict = {
-        '1' : [bmi, stroke, smoking, alcoholdrinking, physicalhealth,mentalhealth,diffwalking,sex,physicalactivity,sleeptime,agecategory,race,skincancer,diabetic,asthma,kidneydisease]
-    }
-    heart_disease_df_user = pd.DataFrame.from_dict(
-            user_dict,
-            orient='index', 
-            columns=['bmi', 'stroke', 'smoking', 'alcoholdrinking', 'physicalhealth','mentalhealth','diffwalking','sex','physicalactivity',\
-                'sleeptime','agecategory','race','skincancer','diabetic','asthma','kidneydisease']
-    )
-
-    st.write(heart_disease_df_user)
-    
-    # train the model on the dataset
-    model = LogisticRegression()
-    
-    y = heart_disease_df_encoded['heartdisease']
-    x = heart_disease_df_encoded.drop('heartdisease', axis=1)
-
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True, random_state=42)
-    
-    st.write(y_train, y_test)
-
-    model.fit(x_train, y_train)
-
-    y_pred = model.predict(x_test)
-    
-    st.write(model.predict_proba(x_test)[y_pred==1])
-    st.write(y_pred[y_pred==1])
-    st.write(accuracy_score(y_test, y_pred))
-    
-    # display the confusion matrix
-    st.pyplot(cf_matrix_plot(y_test, y_pred))
-
-    with col1:
-            # plot proportion of positive/negative examples in training set
-            st.pyplot(pie_pos_neg_chart(y_train, ("Healthy (" + str(len(y_train) - sum(y_train)) + ')', 'heartdisease' + " (" + str(sum(y_train)) + ')'),
-            "How many people in the training set have/had " +  'heartdisease' + "?"))
+        # ----------------------------------------------------------------------------------------------------------------------------------------------------
+        # SIMULATOR PART
+        # ----------------------------------------------------------------------------------------------------------------------------------------------------
         
-    with col2:
-            # plot proportion of positive/negative examples in test set
-            st.pyplot(pie_pos_neg_chart(y_test, ("Healthy (" + str(len(y_test) - sum(y_test)) + ')', 'heartdisease' + " (" + str(sum(y_test)) + ')'),\
-                "How many people in the test set have/had " +  'heartdisease' + "?"))
+        st.write('')
+        st.write('')
+        st.write('')
+
+        # title
+        st.markdown("<h2 style='text-align: center; color: black;'>Simulator</h2>", unsafe_allow_html=True)
+        st.markdown("<h6 style='text-align: center; color: black;'>Insert your data and find the probability to have " + feature_to_predict + "</h6>", unsafe_allow_html=True)
+
+        col1, col2, col3 = st.columns(3)
+
+        # ask user for data only if necessary for predicting
+        heart_disease_dict_user = {}
+        with col1:
+            if 'sex' in predictors:
+                heart_disease_dict_user['sex'] = [st.selectbox('Sex', ['Male', 'Female'])]
+
+            if 'bmi' in predictors:
+                heart_disease_dict_user['bmi'] = [st.selectbox('BMI', ['<18.5 Underweight', '18.5-24.9 Normal weight', '25-29.9 Overweight', '>=30 Obese'], index=1)]
+
+            if 'alcoholdrinking' in predictors:    
+                heart_disease_dict_user['alcoholdrinking'] = [st.selectbox('Drink?', ['No', 'Yes'])]
+                
+            if 'diffwalking' in predictors:    
+                heart_disease_dict_user['diffwalking'] = [st.selectbox('Difficulty walking', ['No', 'Yes'])]
+
+            if 'sleeptime' in predictors:    
+                heart_disease_dict_user['sleeptime'] = [float(st.selectbox('Hours of sleep', list(range(0,25))))]
+
+            if 'kidneydisease' in predictors:    
+                heart_disease_dict_user['kidneydisease'] = [st.selectbox('Kidney disease', ['No', 'Yes'])]
+
+        with col2:
+            if 'race' in predictors:    
+                heart_disease_dict_user['race'] = [st.selectbox('Race', ['White', 'Black', 'Hispanic', 'Asian', 'American Indian/Alaskan Native', 'Other'])]
+
+            if 'smoking' in predictors:    
+                heart_disease_dict_user['smoking'] = [st.selectbox('Smoked at least 100 cigarettes?', ['No', 'Yes'])]
+
+            if 'physicalhealth' in predictors:    
+                heart_disease_dict_user['physicalhealth'] = [float(st.selectbox('Phys health',list(range(0,31))))]
+
+            if 'diabetic' in predictors:    
+                heart_disease_dict_user['diabetic'] = [st.selectbox('Diabetic', ['No', 'Yes'])]
+
+            if 'skincancer' in predictors:    
+                heart_disease_dict_user['skincancer'] = [st.selectbox('Skin cancer', ['No', 'Yes'])]
+            
+        with col3:
+            if 'agecategory' in predictors:       
+                heart_disease_dict_user['agecategory'] = [st.selectbox('Age', ['18-24', '25-29', '30-34','35-39','40-44','45-49','50-54','55-69','70-74','75-79','80 or older'])]
+            
+            if 'stroke' in predictors:      
+                heart_disease_dict_user['stroke'] = [st.selectbox('Ever had stroke?', ['No', 'Yes'])]
+
+            if 'heartdisease' in predictors:
+                heart_disease_dict_user['heartdisease'] = [st.selectbox('Heart Disease', ['No', 'Yes'])]
+            
+            if 'mentalhealth' in predictors:    
+                heart_disease_dict_user['mentalhealth'] = [float(st.selectbox('Mental health',list(range(0,31))))]
+            
+            if 'physicalactivity' in predictors:    
+                heart_disease_dict_user['physicalactivity'] = [st.selectbox('Phys activity', ['No', 'Yes'])]
+            
+            if 'asthma' in predictors:    
+                heart_disease_dict_user['asthma'] = [st.selectbox('Asthma', ['No', 'Yes'])]
+
+    
+        heart_disease_df_user = pd.DataFrame.from_dict(
+                heart_disease_dict_user,
+                orient='columns'
+        )
+
+        
+        # button to predict
+        button_pressed = st.button('Predict')
+        
+        # write the probability to have heart disease
+        #if button_pressed:
+                        
+        # reencode the dataframe adding user data
+        heart_disease_df_encoded = heart_disease_df_before_encoding.copy()
+                    
+        # add user data to dataframe (first drop non used columns)
+
+        heart_disease_df_encoded = heart_disease_df_encoded.append(heart_disease_df_user,ignore_index = True)
+        
+        # find the columns which need encoding
+        categorical_columns = heart_disease_df_encoded.dtypes[heart_disease_df_encoded.dtypes != 'float64'].index.to_list()
+
+        # and encode them
+        for col in categorical_columns:
+            heart_disease_df_encoded[col] = le.fit_transform(heart_disease_df_encoded[col])
+
+        # separate user data from dataframe
+        heart_disease_df_user = heart_disease_df_encoded.iloc[-1]
+        heart_disease_df_user = heart_disease_df_user.drop(feature_to_predict)
+        
+        if pca_method:
+            heart_disease_df_user = pca.transform(heart_disease_df_user.to_numpy().reshape(1, -1))
+            if '2:' in type_of_model or '4:' in type_of_model:
+                st.write("You'll have " + feature_to_predict + " with probability", model.predict_proba(heart_disease_df_user[0, 1]))
+            else:
+                st.write(("You'll have " + feature_to_predict) if model.predict(heart_disease_df_user) == 1 else "You won't have " + feature_to_predict)
+        else:
+            if '2:' in type_of_model or '4:' in type_of_model:
+                st.write("You'll have " + feature_to_predict + " with probability", model.predict_proba(heart_disease_df_user.to_numpy().reshape(1, -1))[0, 1])
+            else:
+                st.write(("You'll have " + feature_to_predict) if model.predict(heart_disease_df_user.to_numpy().reshape(1, -1)) == 1 else "You won't have " + feature_to_predict )
+
+# else:
+#     # ----------------------------------------------------------------------------------------------------------------------------------------------------
+#     # SIMULATOR
+#     # ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+#     # title
+#     st.markdown("<h2 style='text-align: center; color: black;'>Simulator</h2>", unsafe_allow_html=True)
+#     st.markdown("<h6 style='text-align: center; color: black;'>Insert your data and find the probability to have heart disease</h6>", unsafe_allow_html=True)
+
+#     col1, col2, col3 = st.columns(3)
+    
+
+#     with col1:
+#         sex = st.selectbox('Sex', ['Male', 'Female'])
+#         # ['<18,5 (underweight)', '18,5 - 24,9 (healthy)', '25-29,9 (overweight)', '>30 (obese)']
+#         bmi = float(st.selectbox('BMI', list(np.arange(12, 60, 0.5))))
+#         alcoholdrinking = st.selectbox('How many drinks per week?', ['<7', '7-14', '>14'])
+#         diffwalking = st.selectbox('Difficulty walking', ['No', 'Yes'])
+#         sleeptime = float(st.selectbox('Hours of sleep', list(range(0,25))))
+#         kidneydisease = st.selectbox('Kidney disease', ['No', 'Yes'])
+#     with col2:
+#         race = st.selectbox('Race', ['White', 'Black', 'Hispanic', 'Asian', 'American Indian/Alaskan Native', 'Other'])
+#         smoking = st.selectbox('Smoked at least 100 cigarettes?', ['No', 'Yes'])
+#         physicalhealth = float(st.selectbox('Phys health',list(range(0,31))))
+#         diabetic = st.selectbox('Diabetic', ['No', 'Yes'])
+#         skincancer = st.selectbox('Skin cancer', ['No', 'Yes'])
+#     with col3:
+#         # group ages like 18-49, 50-59, 60-69, 70-79, >80 ? 
+#         agecategory = st.selectbox('Age', ['18-24', '25-29', '30-34','35-39','40-44','45-49','50-54','55-69','70-74','75-79','80 or older'])
+#         stroke = st.selectbox('Ever had stroke?', ['No', 'Yes'])
+#         mentalhealth = float(st.selectbox('Mental health',list(range(0,31))))
+#         physicalactivity = st.selectbox('Phys activity', ['No', 'Yes'])
+#         asthma = st.selectbox('Asthma', ['No', 'Yes'])
+
+#     if '<7' in alcoholdrinking:
+#         alcoholdrinking = 'No'
+#     elif '7-14' in alcoholdrinking and sex == 'Male':
+#         alcoholdrinking = 'No'
+#     else:
+#         alcoholdrinking = 'Yes'
+
+#     user_dict = {
+#         '1' : ['No',bmi, smoking, alcoholdrinking, stroke, physicalhealth,mentalhealth,diffwalking,sex,agecategory, race, diabetic, physicalactivity,sleeptime,asthma, kidneydisease, skincancer]
+#     }
+#     heart_disease_df_user = pd.DataFrame.from_dict(
+#             user_dict,
+#             orient='index', 
+#             columns=['heartdisease','bmi', 'smoking', 'alcoholdrinking', 'stroke', 'physicalhealth','mentalhealth','diffwalking','sex','agecategory', 'race', 'diabetic', 'physicalactivity','sleeptime','asthma', 'kidneydisease', 'skincancer']
+#     )
+    
+    
+
+#     # button to predict
+#     button_pressed = st.button('Predict')
+    
+#     # write the probability to have heart disease
+#     if button_pressed:
+#         # train the model on the dataset
+#         model = LogisticRegression()
+        
+#         # reencode the dataframe adding user data
+#         heart_disease_df_encoded = heart_disease_df.copy()
+#         heart_disease_df_encoded = heart_disease_df_encoded.drop('genhealth', axis=1)
+#         heart_disease_df_encoded['diabetic'] = heart_disease_df_encoded['diabetic'].map({'Yes (during pregnancy)' : 'Yes', 'No, borderline diabetes' : 'No'})
+#         # add user data to dataframe
+#         heart_disease_df_encoded = heart_disease_df_encoded.append(heart_disease_df_user,ignore_index = True)
+        
+#         # find the columns which need encoding
+#         categorical_columns = heart_disease_df_encoded.dtypes[heart_disease_df_encoded.dtypes != 'float64'].index.to_list()
+
+#         # and encode them
+#         for col in categorical_columns:
+#             heart_disease_df_encoded[col] = le.fit_transform(heart_disease_df_encoded[col])
+
+#         # separate user data from dataframe
+#         heart_disease_df_user = heart_disease_df_encoded.iloc[-1]
+#         heart_disease_df_user = heart_disease_df_user.drop('heartdisease')
+
+#         # "drop" user data from df
+#         heart_disease_df_encoded = heart_disease_df_encoded.iloc[:-1]
+
+#         #st.write(heart_disease_df_encoded[heart_disease_df_encoded['heartdisease']==1])
+
+#         #  heart_disease_df_aggregate = heart_disease_df_encoded[[heart_disease_df_encoded, 'stroke', 'smoking', 'alcoholdrinking', 'skincancer', 'heartdisease', 'diabetic', 'diffwalking', 'physicalactivity',\
+#         #  'asthma', 'kidneydisease']].groupby(aggregation_feature).aggregate([sum, 'count', 'mean'])
+        
+        
+#         #st.write(heart_disease_df_encoded[['heartdisease','alcoholdrinking']].groupby('heartdisease').aggregate([sum, 'count', 'mean']))
+        
+        
+#         # prepare feature to predict and predictors
+#         y = heart_disease_df_encoded['heartdisease']
+#         x = heart_disease_df_encoded.drop('heartdisease', axis=1)
+                
+       
+
+#         # pca does the orthogonal projection of the feature to obtain 2 dimensions
+#         #pca = PCA(n_components=2)
+#         # return the 2 features that have most explained variance
+#         #x = pca.fit(x).transform(x)
+
+#         # split for training
+#         with st.spinner('Splitting train set...'):
+#             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=True, random_state=42)
+        
+#         # apply SMOTE to training set
+#         with st.spinner('Applying SMOTE...'):
+#             x_train, y_train = sampler(x_train, y_train, '5: SMOTE')
+
+#         # apply pca also to user data
+#         #heart_disease_df_user = pca.transform(heart_disease_df_user.to_numpy().reshape(1, -1))
+        
+        
+#         # train the model
+#         with st.spinner('Training...'):
+#             model.fit(x_train, y_train)
+#             y_pred = model.predict_proba(x_test)
+#             st.write(x_test[y_pred[:,1]>0.5])
+#             st.write(heart_disease_df_user)
+#             #st.write(heart_disease_df_user.to_numpy().reshape(1, -1))
+#             st.write('heart disease with probability', model.predict_proba(heart_disease_df_user.to_numpy().reshape(1, -1)))
+        
+    # # display the confusion matrix
+    # #st.pyplot(cf_matrix_plot(y_test, y_pred))
+
+   
