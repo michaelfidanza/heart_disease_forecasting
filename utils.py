@@ -28,12 +28,11 @@ def sampler(x, y, type_of_sampling):
     return x_sample, y_sample
 
 # function that returns the pie chart of the positive/negative percentages of a single feature
-def pie_pos_neg_chart(y, chart_labels, chart_title):
+def pie_pos_neg_chart(feature, chart_labels, chart_title):
     fig = plt.figure(figsize=(3,3))
     ax = fig.add_subplot(111)
     ax.pie(
-        [len(y) - sum(y),
-        sum(y)]
+        [len(feature) - sum(feature), sum(feature)]
         ,labels=chart_labels
         ,explode=(0, 0.2)
         ,startangle=45
