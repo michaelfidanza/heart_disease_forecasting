@@ -207,37 +207,36 @@ if page == 'Data Exploration':
     # order by age category to obtain better graph
     heart_disease_df_sorted = heart_disease_df_before_encoding.sort_values(by='agecategory')
 
-    feature_distibution = st.selectbox('Select the feature of which you want to see the distribution', \
+    feature_distribution = st.selectbox('Select the feature of which you want to see the distribution', \
         ['smoking', 'alcoholdrinking', 'skincancer', 'diabetic', 'diffwalking', 'physicalactivity', 'asthma', 'kidneydisease', 'physicalhealth', 'mentalhealth', 'sleeptime'])
 
 
     # bar plot for ['sleeptime', 'mentalhealth', 'physicalhealth']
-    if feature_distibution in ['sleeptime', 'mentalhealth', 'physicalhealth']:
+    if feature_distribution in ['sleeptime', 'mentalhealth', 'physicalhealth']:
         
         # bar plot
         fig, ax = plt.subplots(figsize=(3, 3))
-        ax = sns.barplot(
-            heart_disease_df_sorted[feature_distibution].value_counts().sort_index().index.map(lambda x : int(x))
-            ,heart_disease_df_sorted[feature_distibution].value_counts().sort_index()
-            ,palette = 'Reds'
-            ,orient='v'
-            )
         
-        ax.set_xticklabels(ax.get_xticks(),size=8)
+        ax.bar(
+            heart_disease_df_sorted[feature_distribution].value_counts().sort_index().index.map(lambda x : int(x))
+            ,heart_disease_df_sorted[feature_distribution].value_counts().sort_index().values
+            ,align='center'
+            ,color='bisque'
+            ,alpha=1
+        )
+        ax.set_xticks(heart_disease_df_sorted[feature_distribution].value_counts().sort_index().index.map(lambda x : int(x)))
+        ax.set_xticklabels(heart_disease_df_sorted[feature_distribution].value_counts().sort_index().index.map(lambda x : int(x)), rotation=90, size=8)
 
-        for item in ax.get_xticklabels():
-            item.set_rotation(90)   
-            
         ax.set_ylabel('Number of people')
-        ax.set_title('Distribution of ' + feature_distibution)
+        ax.set_title('Distribution of ' + feature_distribution)
         st.write(fig)
 
     # pie chart for other features which are only "yes" - "no" features
     else:        
         # pie charts
-        st.pyplot(pie_pos_neg_chart(heart_disease_df_encoded[feature_distibution], \
-            ("No (" + str(len(heart_disease_df_encoded[feature_distibution]) - sum(heart_disease_df_encoded[feature_distibution])) + ')', "Yes (" + str(sum(heart_disease_df_encoded[feature_distibution])) + ')'), \
-                "Distribution of " + feature_distibution))
+        st.pyplot(pie_pos_neg_chart(heart_disease_df_encoded[feature_distribution], \
+            ("No (" + str(len(heart_disease_df_encoded[feature_distribution]) - sum(heart_disease_df_encoded[feature_distribution])) + ')', "Yes (" + str(sum(heart_disease_df_encoded[feature_distribution])) + ')'), \
+                "Distribution of " + feature_distribution))
 
         
 
