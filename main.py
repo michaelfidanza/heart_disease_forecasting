@@ -56,7 +56,7 @@ heart_disease_df_before_encoding = heart_disease_df.copy()
 # remove outliers
 # Calculate the z-scores
 with st.spinner('calculating zscores'):
-    z_scores = stats.zscore(heart_disease_df_before_encoding[['bmi', 'sleeptime','physicalhealth','mentalhealth']])
+    z_scores = stats.zscore(heart_disease_df_before_encoding[['bmi', 'sleeptime']])#,'physicalhealth','mentalhealth']])
 
 fig, ax = plt.subplots(figsize=(3,3))
 
@@ -67,9 +67,9 @@ fig, ax = plt.subplots(figsize=(3,3))
 
 
 heart_disease_df_before_encoding = heart_disease_df_before_encoding[(z_scores['bmi'] > -3) &  (z_scores['bmi'] < 3) & \
-                                                                     (z_scores['sleeptime'] > -3) &  (z_scores['sleeptime'] < 3) & \
-                                                                       (z_scores['physicalhealth'] > -3) &  (z_scores['physicalhealth'] < 3) &  \
-                                                                           (z_scores['mentalhealth'] > -3) &  (z_scores['mentalhealth'] < 3) ]
+                                                                     (z_scores['sleeptime'] > -3) &  (z_scores['sleeptime'] < 3) ]#& \
+                                                                       #(z_scores['physicalhealth'] > -3) &  (z_scores['physicalhealth'] < 3) &  \
+                                                                        #   (z_scores['mentalhealth'] > -3) &  (z_scores['mentalhealth'] < 3) ]
 
 # drop gen health (retrievable from the other factors)
 heart_disease_df_before_encoding = heart_disease_df_before_encoding.drop('genhealth', axis=1)
@@ -99,6 +99,7 @@ categorical_columns = heart_disease_df_encoded.dtypes[heart_disease_df_encoded.d
 # and encode them
 for col in categorical_columns:
     heart_disease_df_encoded[col] = le.fit_transform(heart_disease_df_encoded[col])
+
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # Pages navigation
@@ -147,6 +148,7 @@ if page == 'Data Exploration':
 
     # correlation matrix
     st.markdown("<h6 style=color: black;'>Correlation Matrix</h6>", unsafe_allow_html=True)
+
     fig, ax = plt.subplots(figsize=(15,15))
     sns.heatmap(heart_disease_df_encoded.corr(), annot=True, ax=ax, cmap='Reds')
     ax.tick_params(axis='x', rotation=45)
@@ -715,6 +717,9 @@ elif page == 'Machine Learning':
         names = ['<18.5 Underweight', '18.5-24.9 Normal weight', '25-29.9 Overweight', '>=30 Obese']
         heart_disease_df_encoded['bmi'] = pd.cut(heart_disease_df_encoded['bmi'], bins, labels=names)
 
+        #drop columns which are not used in the dataset
+        heart_disease_df_encoded = heart_disease_df_encoded[[feature for feature in predictors]]
+
         # add user data to dataframe (this is necessary to obtain the automatic encoding because the function needs to see all possible values in the dataset, not only the user ones.)
         heart_disease_df_encoded = heart_disease_df_encoded.append(heart_disease_df_user,ignore_index = True)
         
@@ -727,9 +732,6 @@ elif page == 'Machine Learning':
 
         # separate user data from dataframe
         heart_disease_df_user = heart_disease_df_encoded.iloc[-1]
-        
-        # keep only features used to predict
-        heart_disease_df_user = heart_disease_df_user.drop(feature_to_predict)
         
         if pca_method:
             
