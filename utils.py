@@ -57,10 +57,10 @@ def cf_matrix_plot(y_test, y_pred):
 
     # calculate the accuracy of the model
     accuracy = str(accuracy_score(y_test, y_pred)* 100)[:5]
-    ax.set_title('Confusion matrix\n\nAccuracy score: ' + accuracy + ' %\n');
+    ax.set_title('Confusion matrix\n\nAccuracy score: ' + accuracy + ' %\n')
     
     ax.set_xlabel('\nPredicted Values')
-    ax.set_ylabel('Real Values ');
+    ax.set_ylabel('Real Values ')
 
     # axes labels
     ax.xaxis.set_ticklabels(['False','True'])

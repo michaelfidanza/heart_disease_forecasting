@@ -601,6 +601,7 @@ elif page == 'Machine Learning':
                 # return the 2 features that have most explained variance
                 x = pca.fit(x).transform(x)
 
+
         # split the dataset into train/test data using a library function
         if shuffle_dataset:
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size_input, shuffle=shuffle_dataset, random_state=42)
@@ -746,6 +747,6 @@ elif page == 'Machine Learning':
         else:
             # if logistic regression or random forest, we can also say the probability of being positive
             if '2:' in type_of_model or '4:' in type_of_model:
-                st.write("You'll have " + feature_to_predict + " with probability", model.predict_proba(heart_disease_df_user.to_numpy().reshape(1, -1))[0, 1])
+                st.write("You'll have " + feature_to_predict + " with probability", round(model.predict_proba(heart_disease_df_user.to_numpy().reshape(1, -1))[0, 1], 2))
             else:
                 st.write(("You'll have " + feature_to_predict) if model.predict(heart_disease_df_user.to_numpy().reshape(1, -1)) == 1 else "You won't have " + feature_to_predict )
